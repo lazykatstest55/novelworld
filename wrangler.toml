@@ -2,10 +2,8 @@ name = "novelworld-worker"
 main = "src/worker.js"
 compatibility_date = "2026-05-16"
 
-[vars]
-OPENAI_BASE_URL = "https://api.openai.com/v1"
-OPENAI_MODEL = "gpt-4.1-mini"
-
-# Set these secrets with Wrangler:
+# following secret are already set in worker dashboard
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put DATABASE_URL
+# wrangler secret put OPENAI_BASE_URL
+# wrangler secret put OPENAI_MODEL
