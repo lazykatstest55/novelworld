@@ -5,124 +5,832 @@ const appHtml = `<!doctype html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Choice Novel</title>
+  <title>NovelWorld AI — Immersive Choice-Driven Storytelling</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; background: #0b1020; color: #e8ecf7; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
-    .card { background: #151d35; border: 1px solid #2a355d; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    h1, h2 { margin-top: 0; }
-    input, textarea, select, button { width: 100%; margin-top: 8px; margin-bottom: 8px; padding: 10px; border-radius: 8px; border: 1px solid #344270; background: #0f1730; color: #e8ecf7; }
-    button { cursor: pointer; background: #3557ff; border: none; font-weight: 700; }
-    button.secondary { background: #2a355d; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .chapter { white-space: pre-wrap; line-height: 1.5; }
-    .choices button { text-align: left; }
-    .muted { opacity: .8; font-size: .9em; }
+    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@300..900&display=swap');
+    
+    body {
+      font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: radial-gradient(circle at 50% 0%, #151030 0%, #05040d 100%);
+      background-attachment: fixed;
+      color: #cbd5e1;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin: 0 0 8px 0;
+      background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    
+    .subtitle {
+      color: #94a3b8;
+      font-size: 1.05rem;
+      margin: 0;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    
+    @media (min-width: 900px) {
+      .grid {
+        grid-template-columns: 380px 1fr;
+      }
+    }
+    
+    .card {
+      background: rgba(18, 14, 43, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card:hover {
+      border-color: rgba(139, 92, 246, 0.25);
+      box-shadow: 0 12px 40px -10px rgba(139, 92, 246, 0.15);
+    }
+    
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a78bfa;
+      margin-bottom: 6px;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 8, 25, 0.7);
+      color: #f1f5f9;
+      font-family: inherit;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      background: rgba(15, 12, 38, 0.9);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-sizing: border-box;
+    }
+    
+    button.primary {
+      background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+    }
+    
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+    }
+    
+    button.primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    button.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+    }
+    
+    button.secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .muted {
+      color: #64748b;
+      font-size: 0.85rem;
+      margin: 8px 0 0 0;
+    }
+    
+    /* Stats Bar */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    
+    .stat-badge.purple {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.2);
+      color: #c084fc;
+    }
+    
+    .stat-badge.pink {
+      background: rgba(236, 72, 153, 0.1);
+      border-color: rgba(236, 72, 153, 0.2);
+      color: #f472b6;
+    }
+    
+    /* Recent Stories Scroll List */
+    .recent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .recent-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .recent-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    
+    .recent-item {
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .recent-item:hover {
+      background: rgba(139, 92, 246, 0.08);
+      border-color: rgba(139, 92, 246, 0.2);
+      transform: translateX(2px);
+    }
+    
+    .recent-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    
+    .recent-title {
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    
+    .recent-genre {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.2);
+    }
+    
+    .recent-plot {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .recent-chapters {
+      font-size: 0.75rem;
+      color: #a78bfa;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    /* Chapters Feed */
+    .chapter-card {
+      margin-bottom: 30px;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .chapter-header {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #c084fc;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .chapter-body {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.12rem;
+      line-height: 1.75;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      letter-spacing: 0.01em;
+    }
+    
+    /* Choices */
+    .choices-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .choices-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a78bfa;
+      margin-bottom: 12px;
+    }
+    
+    .choices-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    .choice-btn {
+      text-align: left;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-weight: 500;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .choice-btn:hover:not(:disabled) {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.35);
+      color: #ffffff;
+      transform: translateX(4px);
+    }
+    
+    .choice-btn.selected {
+      background: rgba(16, 185, 129, 0.12) !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+      color: #10b981 !important;
+      font-weight: 700;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    }
+    
+    .choice-btn.selected::before {
+      content: '✦';
+      color: #10b981;
+    }
+    
+    .choice-btn.unselected {
+      opacity: 0.45;
+    }
+    
+    /* Shimmer Skeleton */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .shimmer-card {
+      border-color: rgba(139, 92, 246, 0.15) !important;
+      background: rgba(18, 14, 43, 0.4) !important;
+    }
+    
+    .shimmer-title, .shimmer-line {
+      background: linear-gradient(90deg, rgba(28, 24, 54, 0.5) 25%, rgba(42, 37, 82, 0.8) 50%, rgba(28, 24, 54, 0.5) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      border-radius: 4px;
+    }
+    
+    .shimmer-title {
+      height: 24px;
+      width: 140px;
+      margin-bottom: 24px;
+    }
+    
+    .shimmer-line {
+      height: 16px;
+      margin-bottom: 12px;
+    }
+    
+    /* Badges */
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+    
+    .badge.genre {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.25);
+      color: #a78bfa;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+    }
+    
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+    }
+    
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin: 0 0 10px 0;
+      color: #fff;
+    }
+    
+    .empty-state p {
+      color: #94a3b8;
+      max-width: 420px;
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Section Divider */
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 24px 0;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>AI Online Novel (Cloudflare Worker + Neon)</h1>
-    <div class="card">
-      <h2>New Novel</h2>
-      <textarea id="plot" placeholder="Plot"></textarea>
-      <textarea id="ability" placeholder="System ability"></textarea>
-      <input id="tags" placeholder="Tags (comma separated)" />
-      <input id="genre" placeholder="Genre" />
-      <button id="createBtn">Create Novel + Generate Chapter 1</button>
-      <p class="muted">Important choice event appears roughly every 5 chapters on average.</p>
-    </div>
-
-    <div class="card" id="novelArea" style="display:none;">
-      <h2 id="title">Novel</h2>
-      <p id="meta" class="muted"></p>
-      <div id="chapters"></div>
-      <button id="nextBtn">Generate Next Chapter</button>
+    <header>
+      <h1>NovelWorld AI</h1>
+      <p class="subtitle">An interactive choice-driven web-novel engine powered by AI</p>
+    </header>
+    
+    <div class="grid">
+      <!-- Left Column / Controls & Sidebar -->
+      <div>
+        <div class="card">
+          <h2><span>✨</span> Forge New Story</h2>
+          
+          <label for="genre">Genre</label>
+          <select id="genre">
+            <option value="Fantasy">High Fantasy</option>
+            <option value="Sci-Fi">Space Opera / Sci-Fi</option>
+            <option value="Cyberpunk">Gritty Cyberpunk</option>
+            <option value="Mystery">Noir Mystery</option>
+            <option value="Horror">Gothic Horror</option>
+            <option value="Isekai">Isekai / GameLit</option>
+          </select>
+          
+          <label for="plot">Premise / Plot Outline</label>
+          <textarea id="plot" placeholder="Brief outline of the world or starting hook. E.g. A disgraced inquisitor uncovers an ancient biomechanical conspiracy in a holy city."></textarea>
+          
+          <label for="ability">Protagonist System Ability</label>
+          <textarea id="ability" placeholder="A unique rule, power, or RPG interface. E.g. Can read the memory of inanimate objects."></textarea>
+          
+          <label for="tags">Tags (comma-separated)</label>
+          <input id="tags" placeholder="cyberpunk, dystopia, magic, mystery" />
+          
+          <button id="createBtn" class="primary">
+            <span>⚔️</span> Forge Novel & Play
+          </button>
+          <p class="muted" style="text-align: center; font-size: 0.75rem;">Important choices appear roughly every 5 chapters.</p>
+        </div>
+        
+        <div class="card">
+          <h2><span>📖</span> Recent Chronicles</h2>
+          <div class="recent-list" id="recentNovelsList">
+            <div style="text-align:center; padding: 20px; color:#64748b;">Loading history...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column / Content Reader -->
+      <div id="rightCol">
+        <!-- Empty State (No Novel Loaded) -->
+        <div class="card empty-state" id="emptyState">
+          <div class="empty-icon">🪐</div>
+          <h3>Your Adventure Awaits</h3>
+          <p>Configure a premise on the left to forge an entirely new dynamic universe, or pick a chronicle from the history below to continue reading.</p>
+        </div>
+        
+        <!-- Novel Area (Hidden by default) -->
+        <div id="novelArea" style="display:none;">
+          <div class="card" style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 12px; margin-bottom: 16px;">
+              <h2 id="novelTitle" style="margin:0;">Novel</h2>
+              <div style="display:flex; gap: 8px;" id="novelBadges"></div>
+            </div>
+            
+            <div class="stats-bar">
+              <div class="stat-badge purple">
+                <span>📖</span> <span id="statChapters">0 Chapters</span>
+              </div>
+              <div class="stat-badge pink">
+                <span>🧭</span> <span id="statChoices">0 Choices Made</span>
+              </div>
+              <div class="stat-badge">
+                <span>🧬</span> <span id="statPresented">0 Presented</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Chapters Container -->
+          <div id="chaptersFeed"></div>
+          
+          <!-- Generation Shimmer Placeholder -->
+          <div class="card shimmer-card" id="shimmerCard" style="display:none;">
+            <div class="shimmer-title"></div>
+            <div class="shimmer-line"></div>
+            <div class="shimmer-line"></div>
+            <div class="shimmer-line" style="width: 80%;"></div>
+            <div class="shimmer-line"></div>
+          </div>
+          
+          <!-- Bottom Action Buttons (for non-choice chapters) -->
+          <div id="bottomAction" style="margin-top: 20px;">
+            <button id="nextBtn" class="primary" style="display:none;">
+              <span>🔮</span> Generate Next Chapter
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-<script>
-let currentNovelId = null;
-let refreshTimer = null;
+  <script>
+    let currentNovelId = null;
+    let isGenerating = false;
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+    function escapeHtml(s) {
+      return String(s || "")
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
 
-function chapterBlock(ch) {
-  const choices = (ch.choices || [])
-    .map(c => '<button onclick="choose(' + ch.id + ', ' + c.id + ')">' + escapeHtml(c.choice_text) + '</button>')
-    .join('');
-  return '<div class="card"><h3>Chapter ' + ch.chapter_number + '</h3><div class="chapter">' + escapeHtml(ch.content) + '</div>' + (choices ? '<div class="choices"><h4>Choose</h4>' + choices + '</div>' : '') + '</div>';
-}
+    // Helper to style choices based on chapter history
+    function renderChoices(ch, isLatest) {
+      const choicesList = ch.choices || [];
+      if (choicesList.length === 0) return '';
+      
+      // Determine if a choice has been selected previously
+      // The choice with selected_count > 0 was chosen
+      const hasChosen = choicesList.some(c => c.selected_count > 0);
+      
+      const buttonsHtml = choicesList.map(c => {
+        let btnClass = 'choice-btn';
+        let disabledAttr = '';
+        
+        if (!isLatest && hasChosen) {
+          if (c.selected_count > 0) {
+            btnClass += ' selected';
+          } else {
+            btnClass += ' unselected';
+          }
+          disabledAttr = 'disabled';
+        } else if (isGenerating) {
+          disabledAttr = 'disabled';
+        }
+        
+        return '<button class="' + btnClass + '" ' + disabledAttr + ' onclick="choose(' + ch.id + ', ' + c.id + ')">' + escapeHtml(c.choice_text) + '</button>';
+      }).join('');
+      
+      return '<div class="choices-section"><div class="choices-title">Develop Storyline</div><div class="choices-list">' + buttonsHtml + '</div></div>';
+    }
 
-async function refreshNovel() {
-  if (!currentNovelId) return;
-  const res = await fetch('/api/novel/' + currentNovelId);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to load novel');
-  document.getElementById('novelArea').style.display = 'block';
-  document.getElementById('title').textContent = 'Novel #' + data.novel.id;
-  document.getElementById('meta').textContent = data.novel.genre + ' | tags: ' + data.novel.tags.join(', ');
-  document.getElementById('chapters').innerHTML = data.chapters.map(chapterBlock).join('');
-}
+    function chapterBlock(ch, index, array) {
+      const isLatest = index === array.length - 1;
+      const choicesHtml = renderChoices(ch, isLatest);
+      
+      // Split content by paragraphs and wrap in p tags
+      const formattedContent = ch.content.split('\\n\\n')
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(p => '<p>' + escapeHtml(p) + '</p>')
+        .join('');
 
-async function choose(chapterId, choiceId) {
-  const btns = document.querySelectorAll('.choices button');
-  btns.forEach(b => b.disabled = true);
-  const res = await fetch('/api/choose', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ novelId: currentNovelId, chapterId, choiceId })
-  });
-  if (!res.ok) {
-    const data = await res.json();
-    alert(data.error || 'Failed to save choice');
-  }
-  await refreshNovel();
-}
-window.choose = choose;
+      return '<div class="card chapter-card"><h3>Chapter ' + ch.chapter_number + '</h3><div class="chapter">' + formattedContent + '</div>' + choicesHtml + '</div>';
+    }
 
-document.getElementById('createBtn').onclick = async () => {
-  const payload = {
-    plot: document.getElementById('plot').value,
-    systemAbility: document.getElementById('ability').value,
-    tags: document.getElementById('tags').value,
-    genre: document.getElementById('genre').value
-  };
-  const res = await fetch('/api/novel', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || 'Failed to create novel');
-    return;
-  }
-  currentNovelId = data.novelId;
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => refreshNovel().catch(() => {}), 5000);
-  await refreshNovel();
-};
+    async function loadNovel(novelId) {
+      if (!novelId) return;
+      currentNovelId = novelId;
+      
+      try {
+        const res = await fetch('/api/novel/' + novelId);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load novel');
+        
+        // Hide empty state and show novel area
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('novelArea').style.display = 'block';
+        
+        // Populate Title and Badges
+        document.getElementById('novelTitle').textContent = 'Chronicle #' + data.novel.id;
+        
+        let badgesHtml = '<span class="badge genre">' + escapeHtml(data.novel.genre) + '</span>';
+        if (data.novel.tags && data.novel.tags.length > 0) {
+          data.novel.tags.forEach(t => {
+            badgesHtml += '<span class="badge">' + escapeHtml(t) + '</span>';
+          });
+        }
+        document.getElementById('novelBadges').innerHTML = badgesHtml;
+        
+        // Render Stats
+        document.getElementById('statChapters').textContent = (data.stats.total_chapters || 0) + ' Chapters';
+        document.getElementById('statChoices').textContent = (data.stats.total_choices_selected || 0) + ' Choices Made';
+        document.getElementById('statPresented').textContent = (data.stats.total_choices_presented || 0) + ' Choices Present';
+        
+        // Render Chapters
+        const chaptersHtml = data.chapters.map((ch, idx, arr) => chapterBlock(ch, idx, arr)).join('');
+        document.getElementById('chaptersFeed').innerHTML = chaptersHtml;
+        
+        // Control "Next Chapter" button visibility
+        // Only show if the latest chapter has no choices and we are not currently generating
+        const latestChapter = data.chapters[data.chapters.length - 1];
+        const hasChoices = latestChapter && latestChapter.choices && latestChapter.choices.length > 0;
+        
+        const nextBtn = document.getElementById('nextBtn');
+        if (!hasChoices && !isGenerating) {
+          nextBtn.style.display = 'flex';
+        } else {
+          nextBtn.style.display = 'none';
+        }
+        
+        // Auto Scroll to bottom of right column
+        setTimeout(() => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 100);
+        
+        // Refresh sidebar list to reflect correct status
+        fetchRecentNovels().catch(() => {});
+        
+      } catch (e) {
+        alert(e.message || 'Failed to load chronicle');
+      }
+    }
 
-document.getElementById('nextBtn').onclick = async () => {
-  const res = await fetch('/api/chapter/next', {
-    method: 'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ novelId: currentNovelId })
-  });
-  if (!res.ok) {
-    const data = await res.json();
-    alert(data.error || 'Failed to generate chapter');
-  }
-  await refreshNovel();
-};
-</script>
+    async function choose(chapterId, choiceId) {
+      if (isGenerating || !currentNovelId) return;
+      
+      isGenerating = true;
+      toggleGeneratingState(true);
+      
+      try {
+        const res = await fetch('/api/choose', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ novelId: currentNovelId, chapterId, choiceId })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to submit choice');
+        }
+        
+        await loadNovel(currentNovelId);
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        isGenerating = false;
+        toggleGeneratingState(false);
+      }
+    }
+
+    async function fetchRecentNovels() {
+      try {
+        const res = await fetch('/api/novels');
+        const data = await res.json();
+        if (!res.ok) return;
+        
+        const listDiv = document.getElementById('recentNovelsList');
+        if (data.novels.length === 0) {
+          listDiv.innerHTML = '<div style="text-align:center; padding: 20px; color:#64748b;">No stories found. Create one to start!</div>';
+          return;
+        }
+        
+        listDiv.innerHTML = data.novels.map(n => {
+          const isSelected = n.id === currentNovelId ? 'style="border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.06);"' : '';
+          return '<div class="recent-item" ' + isSelected + ' onclick="loadNovel(' + n.id + ')">' +
+            '<div class="recent-item-header">' +
+              '<span class="recent-title">Chronicle #' + n.id + '</span>' +
+              '<span class="recent-genre">' + escapeHtml(n.genre) + '</span>' +
+            '</div>' +
+            '<div class="recent-plot">' + escapeHtml(n.plot) + '</div>' +
+            '<div class="recent-chapters">📖 ' + n.total_chapters + ' Chapters</div>' +
+          '</div>';
+        }).join('');
+      } catch (e) {
+        // Suppress or handle background list fetch error
+      }
+    }
+
+    function toggleGeneratingState(loading) {
+      const createBtn = document.getElementById('createBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const shimmer = document.getElementById('shimmerCard');
+      
+      // Disable buttons
+      createBtn.disabled = loading;
+      nextBtn.disabled = loading;
+      
+      if (loading) {
+        createBtn.innerHTML = '<span>⚡</span> Generating Universe...';
+        nextBtn.innerHTML = '<span>⚡</span> Writing Chapter...';
+        shimmer.style.display = 'block';
+        nextBtn.style.display = 'none'; // hide during load
+        
+        // Disable any interactive choice button
+        document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+        
+        // Smooth scroll to the shimmer card
+        setTimeout(() => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 100);
+      } else {
+        createBtn.innerHTML = '<span>⚔️</span> Forge Novel & Play';
+        nextBtn.innerHTML = '<span>🔮</span> Generate Next Chapter';
+        shimmer.style.display = 'none';
+      }
+    }
+
+    document.getElementById('createBtn').onclick = async () => {
+      if (isGenerating) return;
+      
+      const payload = {
+        plot: document.getElementById('plot').value,
+        systemAbility: document.getElementById('ability').value,
+        tags: document.getElementById('tags').value,
+        genre: document.getElementById('genre').value
+      };
+      
+      if (!payload.plot.trim()) {
+        alert('Please enter a story premise/plot outline.');
+        return;
+      }
+      
+      isGenerating = true;
+      toggleGeneratingState(true);
+      
+      try {
+        const res = await fetch('/api/novel', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create story');
+        
+        await loadNovel(data.novelId);
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        isGenerating = false;
+        toggleGeneratingState(false);
+      }
+    };
+
+    document.getElementById('nextBtn').onclick = async () => {
+      if (isGenerating || !currentNovelId) return;
+      
+      isGenerating = true;
+      toggleGeneratingState(true);
+      
+      try {
+        const res = await fetch('/api/chapter/next', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ novelId: currentNovelId })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to generate chapter');
+        }
+        
+        await loadNovel(currentNovelId);
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        isGenerating = false;
+        toggleGeneratingState(false);
+      }
+    };
+
+    // Load initial states
+    window.onload = () => {
+      fetchRecentNovels().catch(() => {});
+    };
+  </script>
 </body>
 </html>`;
 
@@ -160,7 +868,7 @@ async function initDb(sql) {
 
 async function callModel(env, prompt) {
   const base = env.OPENAI_BASE_URL || "https://api.openai.com/v1";
-  const model = env.OPENAI_MODEL || "gpt-4.1-mini";
+  const model = env.OPENAI_MODEL || "gpt-4o-mini";
   const r = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
@@ -198,7 +906,7 @@ async function generateChapter(env, sql, novelId, forcedContext = null) {
 
   const chapterRows = await sql`SELECT * FROM chapters WHERE novel_id=${novelId} ORDER BY chapter_number ASC`;
   const chapterNumber = chapterRows.length + 1;
-  const mustChoice = chapterNumber === 1 || chapterNumber - (Math.floor((chapterNumber - 1) / 5) * 5) === 0 || Math.random() < 0.15;
+  const mustChoice = chapterNumber === 1 || chapterNumber % 5 === 0 || Math.random() < 0.15;
 
   const lastSummary = forcedContext || (chapterRows.length ? chapterRows[chapterRows.length - 1].content.slice(-400) : "");
   const response = await callModel(env, buildPrompt(novel, chapterNumber, lastSummary, mustChoice));
@@ -226,17 +934,34 @@ async function generateChapter(env, sql, novelId, forcedContext = null) {
       updated_at = NOW()`;
 }
 
+let dbInitialized = false;
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!env.DATABASE_URL) return Response.json({ error: "Missing DATABASE_URL secret" }, { status: 500 });
     if (!env.OPENAI_API_KEY) return Response.json({ error: "Missing OPENAI_API_KEY secret" }, { status: 500 });
     const sql = neon(env.DATABASE_URL);
-    await initDb(sql);
+    
+    if (!dbInitialized) {
+      await initDb(sql);
+      dbInitialized = true;
+    }
 
     try {
       if (url.pathname === "/") {
         return new Response(appHtml, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      }
+
+      if (url.pathname === "/api/novels" && req.method === "GET") {
+        const rows = await sql`
+          SELECT n.id, n.genre, n.plot, n.tags, n.created_at,
+                 COALESCE(ns.total_chapters, 0) AS total_chapters
+          FROM novels n
+          LEFT JOIN novel_stats ns ON ns.novel_id = n.id
+          ORDER BY n.created_at DESC
+          LIMIT 10`;
+        return Response.json({ novels: rows });
       }
 
       if (url.pathname === "/api/novel" && req.method === "POST") {
@@ -258,17 +983,20 @@ export default {
         if (!novelRows.length) return Response.json({ error: "Not found" }, { status: 404 });
         const chapters = await sql`
           SELECT c.id, c.chapter_number, c.content,
-            COALESCE(json_agg(json_build_object('id',ch.id,'choice_text',ch.choice_text))
-            FILTER (WHERE ch.id IS NOT NULL), '[]') AS choices
+            COALESCE(json_agg(json_build_object('id',ch.id,'choice_text',ch.choice_text,'selected_count',ch.selected_count))
+            FILTER (WHERE ch.id IS NOT NULL), '[]'::json) AS choices
           FROM chapters c
           LEFT JOIN choices ch ON ch.chapter_id = c.id
           WHERE c.novel_id=${novelId}
           GROUP BY c.id
           ORDER BY c.chapter_number`;
         const novel = novelRows[0];
+        const statsRows = await sql`SELECT * FROM novel_stats WHERE novel_id=${novelId}`;
+        const stats = statsRows[0] || { total_chapters: 0, total_choices_presented: 0, total_choices_selected: 0 };
         return Response.json({
           novel: { ...novel, tags: novel.tags || [] },
-          chapters
+          chapters,
+          stats
         });
       }
 
