@@ -289,6 +289,8 @@ const appHtml = `<!doctype html>
     .chapter-card {
       margin-bottom: 30px;
       animation: fadeIn 0.5s ease-out forwards;
+      position: relative;
+      transition: border-color 0.5s ease, box-shadow 0.5s ease;
     }
     
     .chapter-header {
@@ -301,6 +303,55 @@ const appHtml = `<!doctype html>
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    
+    .share-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #a78bfa;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    
+    .share-btn:hover {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    
+    .share-btn.copied {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.3) !important;
+      color: #10b981 !important;
+    }
+    
+    @keyframes neonGlow {
+      0% {
+        border-color: rgba(139, 92, 246, 0.3);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+      }
+      50% {
+        border-color: rgba(236, 72, 153, 0.8);
+        box-shadow: 0 0 20px rgba(236, 72, 153, 0.6);
+      }
+      100% {
+        border-color: rgba(139, 92, 246, 0.3);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+      }
+    }
+    
+    .target-highlight {
+      animation: neonGlow 2s infinite ease-in-out;
+      border: 2px solid rgba(236, 72, 153, 0.5) !important;
     }
     
     .chapter-body {
@@ -419,6 +470,7 @@ const appHtml = `<!doctype html>
       background: rgba(139, 92, 246, 0.15);
       border-color: rgba(139, 92, 246, 0.25);
       color: #a78bfa;
+      text-transform: capitalize;
     }
     
     /* Empty state */
@@ -479,12 +531,12 @@ const appHtml = `<!doctype html>
           
           <label for="genre">Genre</label>
           <select id="genre">
-            <option value="Fantasy">High Fantasy</option>
-            <option value="Sci-Fi">Space Opera / Sci-Fi</option>
-            <option value="Cyberpunk">Gritty Cyberpunk</option>
-            <option value="Mystery">Noir Mystery</option>
-            <option value="Horror">Gothic Horror</option>
-            <option value="Isekai">Isekai / GameLit</option>
+            <option value="urban">Urban</option>
+            <option value="fantasy">Fantasy</option>
+            <option value="wuxia">Wuxia</option>
+            <option value="scifi/game">Sci-Fi / Game</option>
+            <option value="ancient world">Ancient World</option>
+            <option value="history">History</option>
           </select>
           
           <label for="plot">Premise / Plot Outline</label>
@@ -576,6 +628,21 @@ const appHtml = `<!doctype html>
         .replaceAll("'", '&#39;');
     }
 
+    async function copyLink(url, btn) {
+      try {
+        await navigator.clipboard.writeText(url);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (e) {
+        console.error('Failed to copy', e);
+      }
+    }
+
     // Helper to style choices based on chapter history
     function renderChoices(ch, isLatest) {
       const choicesList = ch.choices || [];
@@ -606,7 +673,7 @@ const appHtml = `<!doctype html>
       return '<div class="choices-section"><div class="choices-title">Develop Storyline</div><div class="choices-list">' + buttonsHtml + '</div></div>';
     }
 
-    function chapterBlock(ch, index, array) {
+    function chapterBlock(ch, index, array, targetChapter) {
       const isLatest = index === array.length - 1;
       const choicesHtml = renderChoices(ch, isLatest);
       
@@ -617,10 +684,21 @@ const appHtml = `<!doctype html>
         .map(p => '<p>' + escapeHtml(p) + '</p>')
         .join('');
 
-      return '<div class="card chapter-card"><h3>Chapter ' + ch.chapter_number + '</h3><div class="chapter">' + formattedContent + '</div>' + choicesHtml + '</div>';
+      const isTarget = targetChapter && ch.chapter_number === targetChapter;
+      const targetClass = isTarget ? ' target-highlight' : '';
+      const shareUrl = window.location.origin + '/novel/' + currentNovelId + '/' + ch.chapter_number;
+
+      return '<div class="card chapter-card' + targetClass + '" id="chapter-' + ch.chapter_number + '">' +
+        '<div class="chapter-header">' +
+          '<span>Chapter ' + ch.chapter_number + '</span>' +
+          '<button class="share-btn" onclick="copyLink(\'' + shareUrl + '\', this)" title="Copy share link for this chapter">🔗 Copy Link</button>' +
+        '</div>' +
+        '<div class="chapter-body">' + formattedContent + '</div>' + 
+        choicesHtml + 
+      '</div>';
     }
 
-    async function loadNovel(novelId) {
+    async function loadNovel(novelId, targetChapter = null) {
       if (!novelId) return;
       currentNovelId = novelId;
       
@@ -650,7 +728,7 @@ const appHtml = `<!doctype html>
         document.getElementById('statPresented').textContent = (data.stats.total_choices_presented || 0) + ' Choices Present';
         
         // Render Chapters
-        const chaptersHtml = data.chapters.map((ch, idx, arr) => chapterBlock(ch, idx, arr)).join('');
+        const chaptersHtml = data.chapters.map((ch, idx, arr) => chapterBlock(ch, idx, arr, targetChapter)).join('');
         document.getElementById('chaptersFeed').innerHTML = chaptersHtml;
         
         // Control "Next Chapter" button visibility
@@ -665,10 +743,27 @@ const appHtml = `<!doctype html>
           nextBtn.style.display = 'none';
         }
         
-        // Auto Scroll to bottom of right column
-        setTimeout(() => {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        }, 100);
+        // Update browser URL to match current state (novelId and chapter if targetChapter)
+        const expectedPath = '/novel/' + novelId + (targetChapter ? '/' + targetChapter : '');
+        if (window.location.pathname !== expectedPath) {
+          history.pushState(null, '', expectedPath);
+        }
+
+        // Scroll logic: if targetChapter is specified, scroll to it, otherwise scroll to bottom
+        if (targetChapter) {
+          setTimeout(() => {
+            const targetEl = document.getElementById('chapter-' + targetChapter);
+            if (targetEl) {
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+          }, 150);
+        } else {
+          setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          }, 100);
+        }
         
         // Refresh sidebar list to reflect correct status
         fetchRecentNovels().catch(() => {});
@@ -826,9 +921,33 @@ const appHtml = `<!doctype html>
       }
     };
 
-    // Load initial states
-    window.onload = () => {
+    function handleRouting() {
+      const path = window.location.pathname;
+      const parts = path.split('/').filter(Boolean);
+      if (parts[0] === 'novel' && parts[1]) {
+        const novelId = parseInt(parts[1], 10);
+        const targetChapter = parts[2] ? parseInt(parts[2], 10) : null;
+        if (!isNaN(novelId)) {
+          loadNovel(novelId, targetChapter);
+          return;
+        }
+      }
+      showEmptyState();
+    }
+
+    function showEmptyState() {
+      currentNovelId = null;
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('novelArea').style.display = 'none';
       fetchRecentNovels().catch(() => {});
+    }
+
+    // Load initial states and register history navigation listener
+    window.onload = () => {
+      handleRouting();
+    };
+    window.onpopstate = () => {
+      handleRouting();
     };
   </script>
 </body>
@@ -867,12 +986,13 @@ async function initDb(sql) {
 }
 
 async function callModel(env, prompt) {
-  const base = env.OPENAI_BASE_URL || "https://api.openai.com/v1";
-  const model = env.OPENAI_MODEL || "gpt-4o-mini";
+  const base = env.OPENAI_BASE_URL || env.CEREBRAS_BASE_URL || "https://api.cerebras.ai/v1";
+  const model = env.OPENAI_MODEL || env.CEREBRAS_MODEL || "zai-glm-4.7";
+  const key = env.OPENAI_API_KEY || env.CEREBRAS_API_KEY;
   const r = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+      "Authorization": `Bearer ${key}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -940,7 +1060,9 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!env.DATABASE_URL) return Response.json({ error: "Missing DATABASE_URL secret" }, { status: 500 });
-    if (!env.OPENAI_API_KEY) return Response.json({ error: "Missing OPENAI_API_KEY secret" }, { status: 500 });
+    if (!env.OPENAI_API_KEY && !env.CEREBRAS_API_KEY) {
+      return Response.json({ error: "Missing OPENAI_API_KEY or CEREBRAS_API_KEY secret" }, { status: 500 });
+    }
     const sql = neon(env.DATABASE_URL);
     
     if (!dbInitialized) {
@@ -949,7 +1071,8 @@ export default {
     }
 
     try {
-      if (url.pathname === "/") {
+      const pathParts = url.pathname.split("/").filter(Boolean);
+      if (url.pathname === "/" || (pathParts[0] === "novel" && pathParts.length >= 2)) {
         return new Response(appHtml, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
       }
 
