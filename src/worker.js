@@ -53,7 +53,7 @@ Your writing characteristics:
 You MUST output your response in strict JSON format.`;
 
 async function callModel(env, prompt) {
-  const base = env.OPENAI_BASE_URL || env.CEREBRAS_BASE_URL || "https://gateway.ai.cloudflare.com/v1/8014e625951e044b568c26d67939ff25/mn/compat";
+  const base = env.OPENAI_BASE_URL || env.CEREBRAS_BASE_URL || "https://gateway.ai.cloudflare.com/v1/8014e625951e044b568c26d67939ff25/mn/cerebras";
   const model = env.OPENAI_MODEL || env.CEREBRAS_MODEL || "zai-glm-4.7";
   const key = env.OPENAI_API_KEY || env.CEREBRAS_API_KEY;
   const r = await fetch(`${base}/chat/completions`, {
