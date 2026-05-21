@@ -4,12 +4,18 @@ import { appHtml } from "./html.js";
 async function initDb(sql) {
   await sql`CREATE TABLE IF NOT EXISTS novels (
     id SERIAL PRIMARY KEY,
+    title TEXT,
     plot TEXT NOT NULL,
     system_ability TEXT NOT NULL,
     tags JSONB NOT NULL,
     genre TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
+  try {
+    await sql`ALTER TABLE novels ADD COLUMN IF NOT EXISTS title TEXT`;
+  } catch (e) {
+    console.error("Migration error (title column):", e);
+  }
   await sql`CREATE TABLE IF NOT EXISTS chapters (
     id SERIAL PRIMARY KEY,
     novel_id INTEGER REFERENCES novels(id) ON DELETE CASCADE,
@@ -33,8 +39,21 @@ async function initDb(sql) {
   )`;
 }
 
+const systemPrompt = `You are an acclaimed, highly popular Chinese Web Novel author (writing translated webnovels on platforms like Wuxiaworld, Webnovel, Qidian). 
+Your style perfectly captures the high-stakes, fast-paced, face-slapping, and epic scale of Xianxia, Xuanhuan, and LitRPG cultivation novels.
+
+Your writing characteristics:
+1. EXTREME DETAIL & DESCRIPTIVENESS: You write massive, verbose, and highly immersive chapters, aiming for at least 1000-1500 words per chapter. You describe every technique, every cultivation stage, every environment, and every spectator's shocked reaction in vivid, detailed prose.
+2. EASTERN TROPES & IDIOMS: Freely use classic tropes like "Courting death!", "To have eyes but fail to recognize Mount Tai", "Spitting blood in anger", "Within the breath of an eye", "A frog at the bottom of a well", and "Eradicating weeds by their roots."
+3. CROWD REACTION & FACE-SLAPPING: Emphasize the disbelief, shock, and gasps of onlookers when the protagonist displays their hidden power or awakens their system. Show arrogant young masters or haughty elders getting their faces slapped (metaphorically or literally) by the protagonist's sheer genius.
+4. POWER LEVELS: Reference distinct, epic cultivation stages (e.g., Qi Condensation, Foundation Establishment, Core Formation, Nascent Soul, Soul Transformation, Immortal Ascension) and detailed martial arts techniques.
+5. SYSTEM INTEGRATION: Seamlessly embed system notifications or status windows with a sleek LitRPG feel (e.g., "[System Notice: Divine Sword Qi awakened! Reward: 500 Cultivation Points]").
+6. RUTHLESS & PRAGMATIC PROTAGONIST: The protagonist is decisive, highly intelligent, and does not leave loose ends (no excessive mercy, will wipe out entire clans if they threaten them).
+
+You MUST output your response in strict JSON format.`;
+
 async function callModel(env, prompt) {
-  const base = env.OPENAI_BASE_URL || env.CEREBRAS_BASE_URL || "https://api.cerebras.ai/v1";
+  const base = env.OPENAI_BASE_URL || env.CEREBRAS_BASE_URL || "https://gateway.ai.cloudflare.com/v1/8014e625951e044b568c26d67939ff25/mn/compat";
   const model = env.OPENAI_MODEL || env.CEREBRAS_MODEL || "zai-glm-4.7";
   const key = env.OPENAI_API_KEY || env.CEREBRAS_API_KEY;
   const r = await fetch(`${base}/chat/completions`, {
@@ -47,7 +66,7 @@ async function callModel(env, prompt) {
       model,
       temperature: 0.9,
       messages: [
-        { role: "system", content: "You are a master Chinese web-novel editor and author. Return STRICT JSON only." },
+        { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_object" }
@@ -64,26 +83,29 @@ async function callModel(env, prompt) {
 }
 
 function buildPrompt(novel, chapterNumber, lastSummary, mustChoice) {
-  return `You are an acclaimed Chinese web novel author specializing in Xianxia, Xuanhuan, and LitRPG/System novels. 
-Write Chapter ${chapterNumber} of our interactive novel.
+  const isFirstChapter = chapterNumber === 1;
+  return `Write Chapter ${chapterNumber} of our epic Chinese web novel.
+The chapter MUST be extremely detailed and long, aiming for at least 1000 to 1200 words. Expand the pacing, flesh out dialogues, describe cultivation techniques, add internal monologues, and include dramatic crowd reactions.
 
-Novel Setup:
+Novel Attributes:
 - Genre: ${novel.genre}
 - Story Premise/Plot: ${novel.plot}
-- Protagonist's System / Cultivation Ability: ${novel.system_ability}
+- Protagonist's System / Special Ability: ${novel.system_ability}
 - Tags: ${novel.tags ? novel.tags.join(', ') : 'none'}
-- Story Continuity / Previous Context: ${lastSummary || 'This is Chapter 1. Establish the protagonist, their starting humble background or crisis, their system awakening, and set the grand cultivation backdrop.'}
+- Previous Context / Continuity: ${lastSummary || 'This is the first chapter. Establish the protagonist\'s humble or disgraced beginning, the direct threat/crisis they face, the sudden awakening of their world-defying system/ability, and the grand, mysterious world backdrop.'}
 
-Directives (Chinese Web Novel Style):
-1. Tone & Tropes: Immersive, exciting, fast-paced. Emphasize cultivation levels, arrogant young masters, martial techniques, Schemes, and jaw-dropping reactions from onlookers.
-2. Protagonist System/Ability: Integrate the protagonist's ability ("${novel.system_ability}") prominently with system message prompts (e.g., "[System: Arrogance slapped! +10 Cultivation Points]").
-3. Word Count: 500-900 words. Keep paragraphs short and punchy.
-4. Chapter Flow: Build dramatic tension, leading to a breakthrough, conflict, or scheme.
-5. Choices: ${mustChoice ? 'This is a CRITICAL path choice. You MUST provide exactly 3 choices for the next move, distinct and interesting (e.g., Ruthless elimination, Cunning retreat, Hidden breakthrough).' : 'No choice prompt is needed this chapter.'}
+Critical Writing Directives:
+1. CHAPTER LENGTH: Aim for 1000-1500 words. Do not summarize or skip events. Write out the dialogues and high-tension action scene-by-scene.
+2. XIANXIA/EASTERN FLAVOR: Use evocative Chinese web novel language ("Dao", "Qi", "Sect", "Tribulation", "Kowtow", "Trash", "Divine Artifact", "Venerable", "Jade Beauty").
+3. PROTO-SYSTEM PROMPTS: Integrate the custom protagonist ability ("${novel.system_ability}") using stylized system boxes (e.g., "[System Notice: Divine Sword Qi awakened! Reward: 500 Cultivation Points]") which should be a central highlight.
+4. DRAMATIC PACE: Create intense build-up, epic face-slapping, or sudden breakthrough moments that leave readers breathless.
+5. NOVEL TITLE GENERATION: ${isFirstChapter ? 'Because this is Chapter 1, you MUST also generate a highly authentic, badass, poetic, and eye-catching translated Chinese web novel title for the overall series (e.g., "Rebirth of the Defiant Sword Emperor", "I Can See Secrets of the Heavenly Dao", "Invincible Sign-In System from the Outer Sect"). Do NOT use the word "Chronicle".' : 'No title generation needed.'}
+6. CHOICES: ${mustChoice ? 'Provide exactly 3 exciting, strategically different choices for the next move of the protagonist (e.g., "A. Wipe out the young master\'s guards ruthlessly", "B. Cunningly slip away and break through in secret", "C. Reveal the hidden cultivation token to shock the Elder").' : 'No choices are needed for this chapter; the story will continue directly.'}
 
 Format your response as a STRICT JSON object:
 {
-  "chapter": "Write the full story text of the chapter here. Use \\\\n\\\\n for paragraphs.",
+  ${isFirstChapter ? '"title": "Generates a highly authentic, badass Chinese web novel title here",' : ''}
+  "chapter": "Write the full, immersive, 1000+ words chapter text here. Use \\\\n\\\\n for paragraphs. Add plenty of dramatic detail, inner dialogue, and combat/cultivation descriptions.",
   "choices": [${mustChoice ? '"Choice 1", "Choice 2", "Choice 3"' : ''}],
   "summary": "A brief continuity summary of events in this chapter."
 }`;
@@ -102,6 +124,11 @@ async function generateChapter(env, sql, novelId, forcedContext = null) {
   const response = await callModel(env, buildPrompt(novel, chapterNumber, lastSummary, mustChoice));
 
   const chapterText = response.chapter || "Chapter generation failed but story continues.";
+  
+  if (chapterNumber === 1 && response.title) {
+    await sql`UPDATE novels SET title=${response.title} WHERE id=${novelId}`;
+  }
+
   const chapterInsert = await sql`
     INSERT INTO chapters (novel_id, chapter_number, content, has_important_choice)
     VALUES (${novelId}, ${chapterNumber}, ${chapterText}, ${mustChoice})
@@ -148,7 +175,7 @@ export default {
 
       if (url.pathname === "/api/novels" && req.method === "GET") {
         const rows = await sql`
-          SELECT n.id, n.genre, n.plot, n.tags, n.created_at,
+          SELECT n.id, n.title, n.genre, n.plot, n.tags, n.created_at,
                  COALESCE(ns.total_chapters, 0) AS total_chapters
           FROM novels n
           LEFT JOIN novel_stats ns ON ns.novel_id = n.id
@@ -162,8 +189,8 @@ export default {
         if (!String(body.plot || "").trim()) return Response.json({ error: "plot is required" }, { status: 400 });
         const tags = String(body.tags || "").split(",").map(s => s.trim()).filter(Boolean);
         const row = await sql`
-          INSERT INTO novels (plot, system_ability, tags, genre)
-          VALUES (${body.plot || "Untitled plot"}, ${body.systemAbility || "No system"}, ${JSON.stringify(tags)}, ${body.genre || "Fantasy"})
+          INSERT INTO novels (plot, system_ability, tags, genre, title)
+          VALUES (${body.plot || "Untitled plot"}, ${body.systemAbility || "No system"}, ${JSON.stringify(tags)}, ${body.genre || "Fantasy"}, 'Forging Destiny...')
           RETURNING id`;
         const novelId = row[0].id;
         await generateChapter(env, sql, novelId);
